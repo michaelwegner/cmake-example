@@ -1,0 +1,36 @@
+# Enables project-wide support for sanitizers by adding the required compile options and linker flags.
+# Usage: -DSANITIZE=X where X can be one of {address, thread, undefined, memory}. Memory is only supported on Linux 
+# using Clang.
+
+if(NOT SANITIZE)
+  return()
+endif()
+string(TOLOWER ${SANITIZE} SANITIZE)
+
+if (UNIX AND NOT APPLE)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    list(APPEND SUPPORTED_SANITIZERS "address" "thread" "undefined" "leak")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    list(APPEND SUPPORTED_SANITIZERS "address" "thread" "memory" "undefined")  
+  else()
+    message(FATAL_ERROR "This CMake script only supports sanitizers for clang and gcc")
+  endif()
+elseif(APPLE)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    list(APPEND SUPPORTED_SANITIZERS "address" "thread" "undefined" "leak")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    list(APPEND SUPPORTED_SANITIZERS "address" "thread" "undefined")  
+  else()
+    message(FATAL_ERROR "This CMake script only supports sanitizers for clang and gcc")
+  endif()
+else()
+  message(FATAL_ERROR "This CMake script only supports Unix and MacOS")
+endif()
+
+if ("${SANITIZE}" IN_LIST SUPPORTED_SANITIZERS)  
+  add_compile_options(-g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZE})  
+  list(APPEND CMAKE_EXE_LINKER_FLAGS -fsanitize=${SANITIZE})
+  message(STATUS "Enabling ${SANITIZE} sanitizer")  
+else()
+  message(WARNING "Sanitizer '${SANITIZE}' not set, check compiler support")
+endif()

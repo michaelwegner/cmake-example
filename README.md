@@ -1,2 +1,2 @@
 # cmake-example
-An example project using modern CMake.
+An example C++ project using modern CMake.
